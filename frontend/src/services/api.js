@@ -39,10 +39,13 @@ api.interceptors.response.use(
       switch (status) {
         case 401:
           // Token expirado ou inválido
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          toast.error('Sessão expirada. Faça login novamente.');
-          window.location.href = '/login';
+          // Só redirecionar se não estivermos já na página de login
+          if (!window.location.pathname.includes('/login')) {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            toast.error('Sessão expirada. Faça login novamente.');
+            window.location.href = '/login';
+          }
           break;
           
         case 403:
