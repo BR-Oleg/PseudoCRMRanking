@@ -71,8 +71,11 @@ const register = async (req, res) => {
 // Login de usuário
 const login = async (req, res) => {
   try {
+    console.log('🔍 DEBUG LOGIN: Iniciando processo de login');
+    
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('🔍 DEBUG LOGIN: Erro de validação:', errors.array());
       return res.status(400).json({
         success: false,
         message: 'Dados inválidos',
@@ -81,21 +84,33 @@ const login = async (req, res) => {
     }
 
     const { email, password } = req.body;
+    console.log('🔍 DEBUG LOGIN: Email recebido:', email);
+    console.log('🔍 DEBUG LOGIN: Senha recebida:', password ? '[PRESENTE]' : '[AUSENTE]');
 
     // Buscar usuário com senha
     const user = await User.findOne({ 
       email: email.toLowerCase() 
     }).select('+password');
 
+    console.log('🔍 DEBUG LOGIN: Usuário encontrado:', !!user);
     if (!user) {
+      console.log('🔍 DEBUG LOGIN: Usuário não encontrado no banco');
+      // Verificar quantos usuários existem
+      const totalUsers = await User.countDocuments();
+      console.log('🔍 DEBUG LOGIN: Total de usuários no banco:', totalUsers);
       return res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'
       });
     }
 
+    console.log('🔍 DEBUG LOGIN: Email do usuário encontrado:', user.email);
+    console.log('🔍 DEBUG LOGIN: Usuário ativo:', user.isActive);
+    console.log('🔍 DEBUG LOGIN: Tem senha hash:', !!user.password);
+
     // Verificar se conta está ativa
     if (!user.isActive) {
+      console.log('🔍 DEBUG LOGIN: Conta desativada');
       return res.status(401).json({
         success: false,
         message: 'Conta desativada'
@@ -103,8 +118,12 @@ const login = async (req, res) => {
     }
 
     // Verificar senha
+    console.log('🔍 DEBUG LOGIN: Iniciando verificação de senha');
     const isPasswordValid = await user.comparePassword(password);
+    console.log('🔍 DEBUG LOGIN: Senha válida:', isPasswordValid);
+    
     if (!isPasswordValid) {
+      console.log('🔍 DEBUG LOGIN: Senha inválida');
       return res.status(401).json({
         success: false,
         message: 'Credenciais inválidas'

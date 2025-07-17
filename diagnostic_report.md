@@ -126,6 +126,53 @@ POST /api/auth/login 401 15.687 ms - 52
 
 ---
 
-**Status**: ⚠️ **AGUARDANDO CORREÇÃO DA CONFIGURAÇÃO DO BANCO**
+## 🔍 DIAGNÓSTICO FINAL
 
-**Última atualização**: $(date)
+### Problema Encontrado
+O erro 401 no login é causado por **timeout de conexão com MongoDB**:
+```
+Operation `users.findOne()` buffering timed out after 10000ms
+```
+
+### Causa Raiz
+1. **Configuração Local vs Produção**: 
+   - Arquivo `.env` local: `mongodb://localhost:27017`
+   - Log de produção mostra: `ac-4sody2w-shard-00-01.7trpe6w.mongodb.net`
+   
+2. **MongoDB Local Indisponível**: Não há MongoDB rodando localmente
+
+3. **Credenciais Atlas**: Faltam as credenciais corretas do MongoDB Atlas
+
+### ✅ SOLUÇÃO IMPLEMENTADA
+
+1. **Arquivo .env atualizado** com o host correto do Atlas
+2. **Logs de debug adicionados** para melhor diagnóstico
+3. **Template da URI** criado (precisa das credenciais)
+
+### 🚨 AÇÃO NECESSÁRIA
+
+**Atualize o arquivo `.env` com as credenciais corretas:**
+
+```env
+MONGODB_URI=mongodb+srv://SEU_USUARIO:SUA_SENHA@ac-4sody2w-shard-00-01.7trpe6w.mongodb.net/gamificacao_vendas?retryWrites=true&w=majority
+```
+
+**Substitua:**
+- `SEU_USUARIO`: nome de usuário do MongoDB Atlas
+- `SUA_SENHA`: senha do MongoDB Atlas
+
+### 🧪 TESTE APÓS CORREÇÃO
+
+```bash
+# 1. Reiniciar servidor
+npm start
+
+# 2. Testar login
+curl -X POST http://localhost:5000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@exemplo.com", "password": "123456"}'
+```
+
+**Status**: ⚠️ **AGUARDANDO CREDENCIAIS DO MONGODB ATLAS**
+
+**Última atualização**: 2024-12-19
