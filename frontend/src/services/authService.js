@@ -53,7 +53,7 @@ const authService = {
   logout() {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    // Não forçar redirecionamento aqui, deixar o componente gerenciar
   },
 
   // Obter dados do usuário atual

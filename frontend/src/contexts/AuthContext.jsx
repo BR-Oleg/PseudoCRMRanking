@@ -31,16 +31,21 @@ export const AuthProvider = ({ children }) => {
         const storedUser = authService.getStoredUser();
         
         if (storedUser) {
-          // Tentar obter dados atualizados do usuário
-          const result = await authService.getCurrentUser();
+          // Primeiro definir o usuário com dados armazenados
+          setUser(storedUser);
+          setIsAuthenticated(true);
           
-          if (result.success) {
-            setUser(result.user);
-            setIsAuthenticated(true);
-          } else {
-            // Se falhar, usar dados armazenados
-            setUser(storedUser);
-            setIsAuthenticated(true);
+          // Tentar obter dados atualizados do usuário em background
+          try {
+            const result = await authService.getCurrentUser();
+            
+            if (result.success) {
+              setUser(result.user);
+            }
+            // Se falhar, manter dados armazenados sem limpar estado
+          } catch (error) {
+            // Em caso de erro na atualização, manter dados armazenados
+            console.warn('Falha ao atualizar dados do usuário, mantendo dados locais:', error);
           }
         }
       } else {
@@ -49,8 +54,11 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Erro ao verificar autenticação:', error);
-      setUser(null);
-      setIsAuthenticated(false);
+      // Só limpar estado se não houver dados válidos armazenados
+      if (!authService.isAuthenticated()) {
+        setUser(null);
+        setIsAuthenticated(false);
+      }
     } finally {
       setLoading(false);
     }
@@ -65,6 +73,8 @@ export const AuthProvider = ({ children }) => {
         setUser(result.user);
         setIsAuthenticated(true);
         toast.success('Login realizado com sucesso!');
+        // Não chamar checkAuth imediatamente após login bem-sucedido
+        // pois pode causar race condition com o token
         return { success: true };
       } else {
         toast.error(result.message);
